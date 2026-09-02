@@ -32,12 +32,22 @@ jobs:
       - name: Restaurar dependências
         run: dotnet restore "Assets Editor/Assets Editor.sln"
 
-      - name: Compilar (Release)
+      - name: Compilar (Release) — verificação rápida
         run: dotnet build "Assets Editor/Assets Editor.sln" --configuration Release --no-restore
+
+      - name: Publicar self-contained (win-x64)
+        run: >
+          dotnet publish "Assets Editor/AssetsEditor.csproj"
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          --output "Assets Editor/publish/win-x64"
 
       - name: Publicar artefato da build
         uses: actions/upload-artifact@v4
         with:
-          name: assets-editor-build
-          path: Assets Editor/**/bin/Release/**
+          name: assets-editor-win-x64
+          path: Assets Editor/publish/win-x64/**
           if-no-files-found: warn
