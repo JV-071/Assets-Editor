@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'ga'
+
+      - name: Cache de pacotes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restaurar dependências
+        run: dotnet restore "Assets Editor/Assets Editor.sln"
+
+      - name: Compilar (Release)
+        run: dotnet build "Assets Editor/Assets Editor.sln" --configuration Release --no-restore
+
+      - name: Publicar artefato da build
+        uses: actions/upload-artifact@v4
+        with:
+          name: assets-editor-build
+          path: Assets Editor/**/bin/Release/**
+          if-no-files-found: warn
